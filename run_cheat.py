@@ -13,7 +13,7 @@ def drop_word(word):
     print("\nPlease select word to drop from list\n")
 
     for i,word in enumerate(word_list):
-        print("({}) {}".format(i, word))
+        print(("({}) {}".format(i, word)))
 
         mybox.print_letter_box(highlight=word)
         mybox.drop_word(word)
@@ -22,7 +22,7 @@ def drop_word(word):
 
     print(" ")
 
-    n = raw_input("Drop (q to cancel): ")
+    n = input("Drop (q to cancel): ")
     letter_range = [str(i) for i in range(len(word_list))]
 
     if n == 'q':
@@ -52,12 +52,12 @@ if __name__ == '__main__':
     c = True
     while(c):
         print(menu)
-        command = raw_input("Command: ")
+        command = input("Command: ")
 
         if command == 'p':
             mybox.print_letter_box()
         elif command == 'f':
-            n = int(raw_input("Enter word length: "))
+            n = int(input("Enter word length: "))
             mybox.find_words(n)
             mybox.print_word_grid()
         elif command == 'w':
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         elif command == 'q':
             c = False
         elif command == 'd':
-            dword = raw_input("Enter word to drop: ")
+            dword = input("Enter word to drop: ")
             drop_word(dword)
         elif command == 'u':
             mybox.undo_drop_word()

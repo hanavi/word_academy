@@ -216,17 +216,14 @@ class wordbox(object):
         logging.debug("Setting filter -> length = {}, letter = {}".format(
             word_length, letter))
 
-        self.d_filter = filter(lambda d: (len(d) == word_length and
-                               d[0] == letter),
-                               self.dictionary)
+        self.d_filter = [d for d in self.dictionary if (len(d) == word_length and
+                               d[0] == letter)]
 
         self.d_filter_short = np.unique([short[:pre_filter_length] for
                                          short in self.d_filter])
 
-        self.d_filter_plurals = filter(
-            lambda d: len(d) == (word_length-1) and d[0] == letter and
-            d[-1] != 's', self.dictionary
-        )
+        self.d_filter_plurals = [d for d in self.dictionary if len(d) == (word_length-1) and d[0] == letter and
+            d[-1] != 's']
 
     def find_words(self, word_length=3):
         """ Search for words of a given length over all starting positions """
@@ -360,7 +357,7 @@ class wordbox(object):
 
         print(" ")
 
-        print DEFAULT
+        print(DEFAULT)
 
     def reset(self):
         """ Set the word grid back to original """
@@ -416,8 +413,8 @@ class wordbox(object):
         self.reset_list()
         for rep, word in zip(tlist,tlist_names):
             if show_steps:
-                print("\n   {}{}{}".format(self.colors['BRED'], word,
-                                           self.colors['DEFAULT']))
+                print(("\n   {}{}{}".format(self.colors['BRED'], word,
+                                           self.colors['DEFAULT'])))
                 self.print_letter_box(highlight=rep)
             self.drop_word(rep)
 
@@ -429,14 +426,14 @@ class wordbox(object):
 
         print ("\n")
         count = 0
-        words = self.word_list.keys()
+        words = list(self.word_list.keys())
         words.sort()
         for name in words:
             count += 1
             if count < size:
-                print name, "   ",
+                print(name, "   ", end=' ')
             else:
-                print name
+                print(name)
                 count = 0
         print ("\n")
 
@@ -449,5 +446,5 @@ class wordbox(object):
         """ Print out a list of the current droped words """
         print(" ")
         for w, tw in zip(self.repeat_list, self.repeat_list_words):
-            print("{}: {}".format(tw, w))
+            print(("{}: {}".format(tw, w)))
         print(" ")
