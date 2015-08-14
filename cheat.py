@@ -39,18 +39,30 @@ class wordbox(object):
         self.dict_is_loaded = False
         self.load_dictionary()
 
+        self.setup_neighbors()
+
         # Temp store word list
         self.word_list = None
 
         # Set up the color pallatte
         self.colors = {
-            'BBLUE' : '\033[1;36m',
-            'OKGREEN' : '\033[92m',
-            'BRED' : '\033[1;31m',
-            'DEFAULT' : '\033[0m'
+            'BBLUE': '\033[1;36m',
+            'OKGREEN': '\033[92m',
+            'BRED': '\033[1;31m',
+            'DEFAULT': '\033[0m'
         }
 
-    def get_neighbors(self, boxnum):
+    def get_neighbors(self, n):
+
+        return self.neighbor_list[n]
+
+    def setup_neighbors(self):
+
+        self.neighbor_list = {}
+        for i in range(self.total_length):
+            self.neighbor_list[i] = self.get_neighbors_start(i)
+
+    def get_neighbors_start(self, boxnum):
         """ Return a list of neighbors for a given box position """
 
         nlist = []
@@ -142,7 +154,8 @@ class wordbox(object):
         words.append([entry])
 
         if prefilter:
-            self.set_filters(count, self.letterbox[entry], prefilter_length)
+            # self.set_filters(count, self.letterbox[entry], prefilter_length)
+            trie = self.trie
 
         for i in range(count-1):
             new_words = []
@@ -150,15 +163,13 @@ class wordbox(object):
             for word in words:
                 surr = self.get_neighbors(word[-1])
                 for s in surr:
+                    tmp_trie = trie
                     if s not in word and self.letterbox[s] != ' ':
                         if prefilter:
-                            if i == (prefilter_length-2):
-                                tword = word[:]
-                                tword.extend([s])
-                                text_word = self.get_text_word(tword)
-                                if text_word in self.d_filter_short:
-                                    new_words.append(tword)
-                            else:
+                            text_word = self.get_text_word(word)
+                            for c in text_word:
+                                tmp_trie = tmp_trie[c]
+                            if self.letterbox[s] in tmp_trie:
                                 tword = word[:]
                                 tword.extend([s])
                                 new_words.append(tword)
@@ -179,20 +190,52 @@ class wordbox(object):
             t_word += self.letterbox[i]
         return t_word
 
-    def load_dictionary(self):
+    def load_dictionary_deprecated(self):
         """ Load the dictionary from file """
 
         fname = "/usr/share/dict/words"
         fd = open(fname)
         self.dictionary = np.unique([line.rstrip().lower() for line in fd])
         fd.close()
-        self.dict_is_loaded = True
+
+    def load_dictionary(self):
+
+        fname = "/usr/share/dict/words"
+        data = np.unique([line.strip().lower() for line in open(fname)])
+
+        mytrie = {}
+
+        for line in data:
+            tmp = mytrie
+            for c in line:
+                if c not in tmp:
+                    tmp[c] = {}
+                tmp = tmp[c]
+            tmp['0'] = ''
+
+        self.dictionary = data
+        self.trie = mytrie
 
     def check_word(self, word, is_text=False):
-        """ Check to see if a word is in the dictionary """
 
-        if self.dict_is_loaded is False:
-            self.load_dictionary()
+        if is_text:
+            tword = word
+        else:
+            tword = self.get_text_word(word)
+
+        tmp = self.trie
+        for c in tword:
+            if c in tmp:
+                tmp = tmp[c]
+            else:
+                return False
+        if '0' in tmp:
+            return True
+        else:
+            return False
+
+    def check_word_deprecated(self, word, is_text=False):
+        """ check to see if a word is in the dictionary """
 
         if not is_text:
             text_word = self.get_text_word(word)
@@ -211,25 +254,22 @@ class wordbox(object):
             return False
 
     def set_filters(self, word_length, letter, pre_filter_length=3):
-        """ Set up the filters so we can process the dictionary faster """
+        """ set up the filters so we can process the dictionary faster """
 
-        logging.debug("Setting filter -> length = {}, letter = {}".format(
+        logging.debug("setting filter -> length = {}, letter = {}".format(
             word_length, letter))
 
-        self.d_filter = [d for d in self.dictionary if (len(d) == word_length and
-                               d[0] == letter)]
+        self.d_filter = [d for d in self.dictionary if (
+            len(d) == word_length and d[0] == letter)]
 
         self.d_filter_short = np.unique([short[:pre_filter_length] for
                                          short in self.d_filter])
 
-        self.d_filter_plurals = [d for d in self.dictionary if len(d) == (word_length-1) and d[0] == letter and
-            d[-1] != 's']
+        self.d_filter_plurals = [d for d in self.dictionary if (
+            len(d) == (word_length-1) and d[0] == letter and d[-1] != 's')]
 
     def find_words(self, word_length=3):
-        """ Search for words of a given length over all starting positions """
-
-        if self.dict_is_loaded is False:
-            self.load_dictionary()
+        """ search for words of a given length over all starting positions """
 
         all_words = {}
         for i in range(self.total_length):
@@ -244,36 +284,36 @@ class wordbox(object):
 
     def find_words_from_pos(self, start, word_list=None, word_length=3,
                             runfilter=True):
-        """ Search for words of a given length starting at a particular
+        """ search for words of a given length starting at a particular
         location
         """
 
         if word_list is None:
             word_list = {}
 
-        logging.info("Processing box: {} ({})".format(start,
+        logging.info("processing box: {} ({})".format(start,
                                                       self.letterbox[start]))
         if self.letterbox[start] == ' ':
             return word_list
 
-        words = self.get_words(start, word_length, prefilter=runfilter)
-        logging.info("Found {} words".format(len(words)))
+        words = self.get_words(start, word_length)
+        logging.info("found {} words".format(len(words)))
 
-        for word in words:
-            if not runfilter or self.check_word(word) == True:
-                text_word = self.get_text_word(word)
-                if text_word not in word_list:
-                    word_list[text_word] = []
+        twords = [self.get_text_word(word) for word in words]
+        for word, wordpath in zip(twords, words):
+            if not runfilter or self.check_word(word, is_text=True) == True:
+                if word not in word_list:
+                    word_list[word] = []
 
-                word_list[text_word].append(word)
+                word_list[word].append(wordpath)
 
                 # print self.get_text_word(word), word
 
         # self.word_list = word_list
         return word_list
 
-    def find_words_from_letter(self, letter, word_length=3, runfilter=True):
-        """ Search for all words of a given length starting with a particular
+    def find_words_from_letter(self, letter, word_length=3, runfilter=False):
+        """ search for all words of a given length starting with a particular
         letter
         """
 
@@ -288,7 +328,7 @@ class wordbox(object):
         return word_list
 
     def drop_word(self, word):
-        """ Drop a word from the grid and update the grid """
+        """ drop a word from the grid and update the grid """
 
         self.repeat_list_words.append(self.get_text_word(word))
 
@@ -321,9 +361,9 @@ class wordbox(object):
         self.run_list()
 
     def print_letter_box(self, original=False, highlight=None):
-        """ Print out the grid """
+        """ print out the grid """
 
-        # TODO: Clean this up!
+        # todo: clean this up!
         BBLUE = '\033[1;36m'
         OKGREEN = '\033[92m'
         BRED = '\033[1;31m'
@@ -360,12 +400,12 @@ class wordbox(object):
         print(DEFAULT)
 
     def reset(self):
-        """ Set the word grid back to original """
+        """ set the word grid back to original """
 
         self.letterbox = self.letterbox_original.copy()
 
     def find_specific_word(self, inword):
-        """ Search for a specific word in the grid """
+        """ search for a specific word in the grid """
 
         if self.word_list is not None:
             if inword in self.word_list:
@@ -378,19 +418,19 @@ class wordbox(object):
             return word_list[inword]
 
     def reset_all(self):
-        """ Reset everything """
+        """ reset everything """
 
         self.reset()
         self.reset_list()
 
     def reset_list(self):
-        """ Reset the dropped words list """
+        """ reset the dropped words list """
 
         self.repeat_list = []
         self.repeat_list_words = []
 
     def add_list_entry(self, new_word):
-        """ Add an entry to the drop words list """
+        """ add an entry to the drop words list """
 
         if self.repeat_list is None:
             self.repeat_list = []
@@ -399,22 +439,22 @@ class wordbox(object):
         self.repeat_list.append(new_word)
 
     def drop_list_entry(self):
-        """ Drop the last entry from the drop word list """
+        """ drop the last entry from the drop word list """
 
         self.repeat_list = self.repeat_list[:-1]
         self.repeat_list_words = self.repeat_list_words[:-1]
 
     def run_list(self, show_steps=False):
-        """ Run the drop word list """
+        """ run the drop word list """
 
         self.reset()
         tlist = self.repeat_list[:]
         tlist_names = self.repeat_list_words[:]
         self.reset_list()
-        for rep, word in zip(tlist,tlist_names):
+        for rep, word in zip(tlist, tlist_names):
             if show_steps:
                 print(("\n   {}{}{}".format(self.colors['BRED'], word,
-                                           self.colors['DEFAULT'])))
+                                            self.colors['DEFAULT'])))
                 self.print_letter_box(highlight=rep)
             self.drop_word(rep)
 
@@ -422,9 +462,9 @@ class wordbox(object):
             self.print_letter_box()
 
     def print_word_grid(self, size=7):
-        """ Print the found words in a grid """
+        """ print the found words in a grid """
 
-        print ("\n")
+        print("\n")
         count = 0
         words = list(self.word_list.keys())
         words.sort()
@@ -435,15 +475,15 @@ class wordbox(object):
             else:
                 print(name)
                 count = 0
-        print ("\n")
+        print("\n")
 
     def get_word_list(self):
-        """ Return the found words """
+        """ return the found words """
 
         return self.word_list
 
     def list_operations(self):
-        """ Print out a list of the current droped words """
+        """ print out a list of the current droped words """
         print(" ")
         for w, tw in zip(self.repeat_list, self.repeat_list_words):
             print(("{}: {}".format(tw, w)))
