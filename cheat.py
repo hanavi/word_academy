@@ -163,7 +163,8 @@ class wordbox(object):
             for word in words:
                 surr = self.get_neighbors(word[-1])
                 for s in surr:
-                    tmp_trie = trie
+                    if prefilter:
+                        tmp_trie = trie
                     if s not in word and self.letterbox[s] != ' ':
                         if prefilter:
                             text_word = self.get_text_word(word)
@@ -296,7 +297,7 @@ class wordbox(object):
         if self.letterbox[start] == ' ':
             return word_list
 
-        words = self.get_words(start, word_length)
+        words = self.get_words(start, word_length, prefilter=runfilter)
         logging.info("found {} words".format(len(words)))
 
         twords = [self.get_text_word(word) for word in words]
@@ -477,13 +478,29 @@ class wordbox(object):
                 count = 0
         print("\n")
 
-    def get_word_list(self):
+    def get_word_list(self, as_dict=True):
         """ return the found words """
 
-        return self.word_list
+        if as_dict:
+            return self.word_list
+
+        wl = []
+        for key in self.word_list:
+            for ent in self.word_list[key]:
+                wl.append(ent)
+
+        return wl
+
+    def load_repeat_list(self, in_list):
+
+        self.reset_all()
+
+        for word in in_list:
+            self.drop_word(word)
 
     def list_operations(self):
         """ print out a list of the current droped words """
+
         print(" ")
         for w, tw in zip(self.repeat_list, self.repeat_list_words):
             print(("{}: {}".format(tw, w)))
