@@ -3,6 +3,7 @@
 import numpy as np
 from boxes import boxes
 import logging
+import progressbar
 
 
 class wordbox(object):
@@ -43,6 +44,8 @@ class wordbox(object):
 
         # Temp store word list
         self.word_list = None
+
+        self.solutions = None
 
         # Set up the color pallatte
         self.colors = {
@@ -505,3 +508,110 @@ class wordbox(object):
         for w, tw in zip(self.repeat_list, self.repeat_list_words):
             print(("{}: {}".format(tw, w)))
         print(" ")
+
+    def get_repeat_list(self, key):
+        rlist = []
+        if type(key) is tuple:
+            for ent in key:
+                k1 = eval(ent)
+                rlist.append(k1)
+        else:
+            rlist.append(eval(key))
+
+        return rlist
+
+    def convert(self, rlist):
+        ret = []
+        for key in rlist:
+            k = eval(key)
+            ret.append(k)
+        return ret
+
+    def run_cheat(self):
+
+        counts = [6,9,6,6,9]
+        BOXID = 20
+
+        k1 = None
+
+        wl = {}
+        for i,count in enumerate(counts):
+
+            print("")
+            print("")
+            print("Processing at Level: {}({})".format(i,count))
+            print("")
+
+            self.reset_all()
+            if len(wl) == 0:
+                b = progressbar.ProgressBar()
+                b.start()
+                self.find_words(count)
+                word_list = self.get_word_list(as_dict=False)
+
+                for ent in word_list:
+                    wl[str(ent)] = {}
+
+                b.update(100)
+
+            else:
+                tot = len(wl)
+                wl_new = {}
+                d = 0
+                b = progressbar.ProgressBar()
+                b.start()
+                for key in wl:
+                    d += 1
+                    p = d/tot*100
+
+                    if i % 100:
+                        b.update(p)
+                    rlist = self.get_repeat_list(key)
+                    # rlist = [rlist]
+                    # print(rlist)
+
+                    self.load_repeat_list(rlist)
+                    self.run_list()
+                    self.find_words(count)
+                    twl = self.get_word_list(as_dict=False)
+
+                    if len(twl) != 0:
+                        for ent in twl:
+                            new_key = []
+                            if type(key) is tuple:
+                                for k0 in key:
+                                    new_key.append(k0)
+                                new_key.append(str(ent))
+                                wl_new[tuple(new_key)] = {}
+                            else:
+                                wl_new[key,str(ent)] = {}
+                    self.undo_drop_word()
+
+                wl = wl_new
+
+        self.solutions = wl
+
+        print("\n\nFound {} matches\n".format(len(wl)))
+
+        self.reset_all()
+
+    def get_solution_detailed(self,n):
+        for i,w in enumerate(self.solutions):
+            if i == n:
+                self.load_repeat_list(self.convert(self.solutions[n]))
+                self.run_list(show_steps=True)
+
+    def print_solutions_all(self):
+
+        count = 0
+        if len(self.solutions) > 0:
+            y = [key for key in self.solutions]
+            for y0 in y:
+                self.load_repeat_list(self.convert(y0))
+                print("-------------------------------------")
+                print("id = {}".format(count))
+                self.list_operations()
+                self.run_list()
+                print("-------------------------------------")
+                count += 1
+

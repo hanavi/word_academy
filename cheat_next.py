@@ -5,8 +5,8 @@ import cheat
 import pickle
 import progressbar
 
-counts = [7,11,9,9]
-BOXID = 19
+counts = [6,9,6,6,9]
+BOXID = 20
 
 
 

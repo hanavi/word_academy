@@ -45,6 +45,8 @@ menu = ("\n"
         "(u) Undo drop word \n"
         "(l) List current operations \n"
         "(r) Replay current operations \n"
+        "(c) Run cheat\n"
+        "(s) Print solutions\n"
         "(q) Quit \n"
         "--------------------------------------------\n")
 
@@ -74,6 +76,14 @@ if __name__ == '__main__':
             mybox.list_operations()
         elif command == 'r':
             mybox.run_list(show_steps=True)
+        elif command == 'c':
+            mybox.run_cheat()
+        elif command == 's':
+            mybox.print_solutions_all()
+            n = int(input("Detailed view: "))
+            mybox.get_solution_detailed(n)
+
+
         else:
             print("\nCommand not found! Please try again")
 
