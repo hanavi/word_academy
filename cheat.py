@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
-from boxes import boxes
+from boxes import boxes,bcount
 import logging
 import progressbar
 
@@ -21,6 +21,7 @@ class wordbox(object):
             if maxboxid:
                 boxid = max(boxes.keys())
             starting = boxes[boxid]
+        self.counts = bcount[boxid]
 
         # Set some useful variables
         self.n = np.sqrt(len(starting))            # Grid size
@@ -40,6 +41,7 @@ class wordbox(object):
         self.dict_is_loaded = False
         self.load_dictionary()
 
+        # Set up the neighbor list in the beginning to make things run faster
         self.setup_neighbors()
 
         # Temp store word list
@@ -56,10 +58,13 @@ class wordbox(object):
         }
 
     def get_neighbors(self, n):
+        """ Return the list of neighbor squares """
 
         return self.neighbor_list[n]
 
     def setup_neighbors(self):
+        """ Set up the list of neighbors at the beginning to speed up the run
+        """
 
         self.neighbor_list = {}
         for i in range(self.total_length):
@@ -203,12 +208,13 @@ class wordbox(object):
         fd.close()
 
     def load_dictionary(self):
+        """ Load the dictionary to check the words """
 
         fname = "/usr/share/dict/words"
         data = np.unique([line.strip().lower() for line in open(fname)])
 
+        # Build a trie for a trie search!
         mytrie = {}
-
         for line in data:
             tmp = mytrie
             for c in line:
@@ -221,6 +227,7 @@ class wordbox(object):
         self.trie = mytrie
 
     def check_word(self, word, is_text=False):
+        """ See if a letter string is a word in the dictionary """
 
         if is_text:
             tword = word
@@ -258,7 +265,7 @@ class wordbox(object):
             return False
 
     def set_filters(self, word_length, letter, pre_filter_length=3):
-        """ set up the filters so we can process the dictionary faster """
+        """ Set up the filters so we can process the dictionary faster """
 
         logging.debug("setting filter -> length = {}, letter = {}".format(
             word_length, letter))
@@ -273,7 +280,7 @@ class wordbox(object):
             len(d) == (word_length-1) and d[0] == letter and d[-1] != 's')]
 
     def find_words(self, word_length=3):
-        """ search for words of a given length over all starting positions """
+        """ Search for words of a given length over all starting positions """
 
         all_words = {}
         for i in range(self.total_length):
@@ -361,11 +368,13 @@ class wordbox(object):
         self.add_list_entry(word)
 
     def undo_drop_word(self):
+        """ Undo the last word """
+
         self.drop_list_entry()
         self.run_list()
 
     def print_letter_box(self, original=False, highlight=None):
-        """ print out the grid """
+        """ Print out the grid """
 
         # todo: clean this up!
         BBLUE = '\033[1;36m'
@@ -404,12 +413,12 @@ class wordbox(object):
         print(DEFAULT)
 
     def reset(self):
-        """ set the word grid back to original """
+        """ Set the word grid back to original """
 
         self.letterbox = self.letterbox_original.copy()
 
     def find_specific_word(self, inword):
-        """ search for a specific word in the grid """
+        """ Search for a specific word in the grid """
 
         if self.word_list is not None:
             if inword in self.word_list:
@@ -422,19 +431,19 @@ class wordbox(object):
             return word_list[inword]
 
     def reset_all(self):
-        """ reset everything """
+        """ Reset everything """
 
         self.reset()
         self.reset_list()
 
     def reset_list(self):
-        """ reset the dropped words list """
+        """ Reset the dropped words list """
 
         self.repeat_list = []
         self.repeat_list_words = []
 
     def add_list_entry(self, new_word):
-        """ add an entry to the drop words list """
+        """ Add an entry to the drop words list """
 
         if self.repeat_list is None:
             self.repeat_list = []
@@ -443,13 +452,13 @@ class wordbox(object):
         self.repeat_list.append(new_word)
 
     def drop_list_entry(self):
-        """ drop the last entry from the drop word list """
+        """ Drop the last entry from the drop word list """
 
         self.repeat_list = self.repeat_list[:-1]
         self.repeat_list_words = self.repeat_list_words[:-1]
 
     def run_list(self, show_steps=False):
-        """ run the drop word list """
+        """ Run the drop word list """
 
         self.reset()
         tlist = self.repeat_list[:]
@@ -466,7 +475,7 @@ class wordbox(object):
             self.print_letter_box()
 
     def print_word_grid(self, size=7):
-        """ print the found words in a grid """
+        """ Print the found words in a grid """
 
         print("\n")
         count = 0
@@ -482,7 +491,7 @@ class wordbox(object):
         print("\n")
 
     def get_word_list(self, as_dict=True):
-        """ return the found words """
+        """ Return the found words """
 
         if as_dict:
             return self.word_list
@@ -495,6 +504,7 @@ class wordbox(object):
         return wl
 
     def load_repeat_list(self, in_list):
+        """ Load the list of words to be repeated """
 
         self.reset_all()
 
@@ -502,7 +512,7 @@ class wordbox(object):
             self.drop_word(word)
 
     def list_operations(self):
-        """ print out a list of the current droped words """
+        """ Print out a list of the current droped words """
 
         print(" ")
         for w, tw in zip(self.repeat_list, self.repeat_list_words):
@@ -521,6 +531,7 @@ class wordbox(object):
         return rlist
 
     def convert(self, rlist):
+        """ Convert the saved keys to lists to be evaluated """
         ret = []
         for key in rlist:
             k = eval(key)
@@ -529,13 +540,10 @@ class wordbox(object):
 
     def run_cheat(self):
 
-        counts = [6,9,6,6,9]
-        BOXID = 20
-
         k1 = None
 
         wl = {}
-        for i,count in enumerate(counts):
+        for i,count in enumerate(self.counts):
 
             print("")
             print("")
@@ -588,6 +596,7 @@ class wordbox(object):
                     self.undo_drop_word()
 
                 wl = wl_new
+                b.update(100)
 
         self.solutions = wl
 
@@ -596,22 +605,24 @@ class wordbox(object):
         self.reset_all()
 
     def get_solution_detailed(self,n):
-        for i,w in enumerate(self.solutions):
-            if i == n:
-                self.load_repeat_list(self.convert(self.solutions[n]))
-                self.run_list(show_steps=True)
+        if self.solutions is not None:
+            for i,key in enumerate(self.solutions):
+                if i == n:
+                    self.load_repeat_list(self.convert(self.solutions[key]))
+                    self.run_list(show_steps=True)
 
     def print_solutions_all(self):
 
         count = 0
-        if len(self.solutions) > 0:
-            y = [key for key in self.solutions]
-            for y0 in y:
-                self.load_repeat_list(self.convert(y0))
-                print("-------------------------------------")
-                print("id = {}".format(count))
-                self.list_operations()
-                self.run_list()
-                print("-------------------------------------")
-                count += 1
+        if self.solutions is not None:
+            if len(self.solutions) > 0:
+                y = [key for key in self.solutions]
+                for y0 in y:
+                    self.load_repeat_list(self.convert(y0))
+                    print("-------------------------------------")
+                    print("id = {}".format(count))
+                    self.list_operations()
+                    self.run_list()
+                    print("-------------------------------------")
+                    count += 1
 
