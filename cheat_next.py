@@ -5,14 +5,14 @@ import cheat
 import pickle
 import progressbar
 
-counts = [5,4,9,8,10]
+counts = [5, 4, 9, 8, 10]
 BOXID = 21
-
-
 
 mybox = cheat.wordbox(boxid=BOXID)
 
 k1 = None
+
+
 def get_repeat_list(key):
     rlist = []
     if type(key) is tuple:
@@ -27,11 +27,11 @@ def get_repeat_list(key):
 
 
 wl = {}
-for i,count in enumerate(counts):
+for i, count in enumerate(counts):
 
     print("")
     print("")
-    print("Processing at Level: {}({})".format(i,count))
+    print("Processing at Level: {}({})".format(i, count))
     print("")
 
     mybox.reset_all()
@@ -76,10 +76,11 @@ for i,count in enumerate(counts):
                         new_key.append(str(ent))
                         wl_new[tuple(new_key)] = {}
                     else:
-                        wl_new[key,str(ent)] = {}
+                        wl_new[key, str(ent)] = {}
             mybox.undo_drop_word()
 
         wl = wl_new
+
 
 def convert(rlist):
     ret = []
@@ -87,7 +88,6 @@ def convert(rlist):
         k = eval(key)
         ret.append(k)
     return ret
-
 
 
 print("\n\nFound {} matches\n".format(len(wl)))
@@ -104,8 +104,6 @@ if len(wl) > 0:
         print("-------------------------------------")
 
 
-fd = open("tmpout.dat",'wb')
-pickle.dump(wl,fd)
+fd = open("tmpout.dat", 'wb')
+pickle.dump(wl, fd)
 fd.close()
-
-

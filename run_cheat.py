@@ -4,6 +4,7 @@ import cheat
 
 mybox = cheat.wordbox(maxboxid=True)
 
+
 def drop_word(word):
     word_list = mybox.find_specific_word(word)
     if word_list is None:
@@ -12,7 +13,7 @@ def drop_word(word):
 
     print("\nPlease select word to drop from list\n")
 
-    for i,word in enumerate(word_list):
+    for i, word in enumerate(word_list):
         print(("({}) {}".format(i, word)))
 
         mybox.print_letter_box(highlight=word)
@@ -33,8 +34,6 @@ def drop_word(word):
     else:
         print("\nError: Please try again")
 
-
-
 menu = ("\n"
         "Please select from options below \n"
         "--------------------------------------------\n"
@@ -51,6 +50,7 @@ menu = ("\n"
         "--------------------------------------------\n")
 
 if __name__ == '__main__':
+
     c = True
     while(c):
         print(menu)
@@ -82,10 +82,7 @@ if __name__ == '__main__':
             mybox.print_solutions_all()
             n = int(input("Detailed view: "))
             mybox.get_solution_detailed(n)
-
-
         else:
             print("\nCommand not found! Please try again")
 
     print ("\n")
-

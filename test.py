@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 import unittest
-
-from boxes import boxes
 import cheat
 
 
@@ -59,12 +57,9 @@ class TestCheatBoxes(unittest.TestCase):
 
     def test_get_words(self):
 
-        words_check_1 = self.cheat.get_words(0,3)
-        words_check_2 = self.cheat.get_words(5,3)
-        words_check_3 = self.cheat.get_words(10,5)
-
-
-
+        words_check_1 = self.cheat.get_words(0, 3)
+        words_check_2 = self.cheat.get_words(5, 3)
+        words_check_3 = self.cheat.get_words(10, 5)
 
 if __name__ == '__main__':
     unittest.main()

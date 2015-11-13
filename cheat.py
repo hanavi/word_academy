@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
-from boxes import boxes,bcount
+from boxes import boxes, bcount
 import logging
 import progressbar
 
@@ -484,7 +484,8 @@ class wordbox(object):
         for name in words:
             count += 1
             if count < size:
-                print(name, "   ", end=' ')
+                # print(name, "   ", end=' ')
+                print("{}   ".format(name), end=' ')
             else:
                 print(name)
                 count = 0
@@ -543,11 +544,11 @@ class wordbox(object):
         k1 = None
 
         wl = {}
-        for i,count in enumerate(self.counts):
+        for i, count in enumerate(self.counts):
 
             print("")
             print("")
-            print("Processing at Level: {}({})".format(i,count))
+            print("Processing at Level: {}({})".format(i, count))
             print("")
 
             self.reset_all()
@@ -592,7 +593,7 @@ class wordbox(object):
                                 new_key.append(str(ent))
                                 wl_new[tuple(new_key)] = {}
                             else:
-                                wl_new[key,str(ent)] = {}
+                                wl_new[key, str(ent)] = {}
                     self.undo_drop_word()
 
                 wl = wl_new
@@ -604,9 +605,9 @@ class wordbox(object):
 
         self.reset_all()
 
-    def get_solution_detailed(self,n):
+    def get_solution_detailed(self, n):
         if self.solutions is not None:
-            for i,key in enumerate(self.solutions):
+            for i, key in enumerate(self.solutions):
                 if i == n:
                     self.load_repeat_list(self.convert(self.solutions[key]))
                     self.run_list(show_steps=True)
@@ -625,4 +626,3 @@ class wordbox(object):
                     self.run_list()
                     print("-------------------------------------")
                     count += 1
-
